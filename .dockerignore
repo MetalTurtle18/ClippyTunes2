@@ -1,0 +1,8 @@
+*
+!logback.xml
+!src/
+!.gradle/
+!gradle/
+!gradlew
+!build.gradle.kts
+!settings.gradle.kts

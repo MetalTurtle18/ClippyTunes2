@@ -1,3 +1,1 @@
-
-rootProject.name = "ClippyTunes2"
-
+rootProject.name = "ClippyTunes"

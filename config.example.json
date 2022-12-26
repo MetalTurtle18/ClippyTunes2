@@ -1,0 +1,15 @@
+{
+  "discord": {
+    "bot-token": "<TOKEN>",
+    "status": {
+      "activity": "listening",
+      "description": "to music"
+    }
+  },
+  "youtube": {
+    "api-key": "<API-KEY>"
+  },
+  "spotify": {
+    "api-key": "<API-KEY>"
+  }
+}
