@@ -4,7 +4,8 @@
     "status": {
       "activity": "listening",
       "description": "to music"
-    }
+    },
+    "guilds": []
   },
   "youtube": {
     "api-key": "<API-KEY>"

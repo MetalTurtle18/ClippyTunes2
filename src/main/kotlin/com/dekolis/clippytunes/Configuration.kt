@@ -11,13 +11,24 @@ val config: Config by lazy {
 }
 
 @Serializable
-data class Config(val discord: Discord, @SerialName("youtube") val youTube: YouTube, val spotify: Spotify)
+data class Config(
+    val discord: Discord,
+    @SerialName("youtube") val youTube: YouTube,
+    val spotify: Spotify
+)
 
 @Serializable
-data class Discord(@SerialName("bot-token") val botToken: String, val status: Status)
+data class Discord(
+    @SerialName("bot-token") val botToken: String,
+    val status: Status,
+    val guilds: List<Long>
+)
 
 @Serializable
-data class Status(val activity: String, val description: String) {
+data class Status(
+    val activity: String,
+    val description: String
+) {
     init {
         require(activity in listOf("PLAYING", "WATCHING", "LISTENING", "STREAMING", "COMPETING"))
     }
