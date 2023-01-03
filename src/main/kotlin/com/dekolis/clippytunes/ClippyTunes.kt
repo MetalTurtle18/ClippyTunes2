@@ -22,7 +22,9 @@ import dev.minn.jda.ktx.events.CoroutineEventManager
 import dev.minn.jda.ktx.events.onCommand
 import dev.minn.jda.ktx.interactions.commands.slash
 import dev.minn.jda.ktx.interactions.commands.updateCommands
+import dev.minn.jda.ktx.jdabuilder.cache
 import dev.minn.jda.ktx.jdabuilder.light
+import dev.minn.jda.ktx.messages.reply_
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -32,6 +34,8 @@ import net.dv8tion.jda.api.events.guild.GenericGuildEvent
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent
 import net.dv8tion.jda.api.events.session.ShutdownEvent
+import net.dv8tion.jda.api.requests.GatewayIntent
+import net.dv8tion.jda.api.utils.cache.CacheFlag
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.lang.Integer.max
@@ -50,7 +54,7 @@ private val pool = Executors.newScheduledThreadPool(getThreadCount()) {
 }
 
 fun main(args: Array<String>) {
-    // All this coroutine shit is from https://github.com/MinnDevelopment/strumbot/blob/master/src/main/kotlin/strumbot/main.kt
+    // All this coroutine stuff is from https://github.com/MinnDevelopment/strumbot/blob/master/src/main/kotlin/strumbot/main.kt
     // Use the global thread pool for coroutine dispatches
     val dispatcher = pool.asCoroutineDispatcher()
     // Using a SupervisorJob allows coroutines to fail without cancelling all other jobs
@@ -72,16 +76,13 @@ fun main(args: Array<String>) {
     // Create a coroutine manager with this scope and a default event timeout of 1 minute
     val manager = CoroutineEventManager(scope, 1.minutes)
 
-    manager.initCommands()
-
-    manager.listener<ShutdownEvent> {
-        supervisor.cancel()
-    }
-
     logger.info("Initializing JDA")
     val jda = light(
         token = config.discord.botToken,
-        enableCoroutines = false
+        enableCoroutines = false,
+        intents = listOf(
+            GatewayIntent.GUILD_VOICE_STATES
+        )
     ) {
         setEventManager(manager)
         setCallbackPool(pool)
@@ -93,18 +94,63 @@ fun main(args: Array<String>) {
                 config.discord.status.description
             )
         )
+        cache += CacheFlag.VOICE_STATE
     }
 
     jda.awaitReady()
     logger.info("Initialized JDA")
 
+    // https://github.com/MinnDevelopment/strumbot/blob/master/src/main/kotlin/strumbot/main.kt
+    // Listener for when the bot joins a guild or when guilds are initialized on startup
+    manager.listener<GenericGuildEvent> { event ->
+        if (event !is GuildReadyEvent && event !is GuildJoinEvent) return@listener
+
+        val guild = event.guild
+        logger.info("Guild ready for startup: ${guild.name}. Checking to see if it is in the config...")
+
+        if (guild.idLong !in config.discord.guilds) {
+            logger.info("Guild ${guild.name} is not in the config. Skipping...")
+            return@listener
+        }
+        logger.info("Guild is in the config. Updating commands...")
+
+        // Update commands for this guild
+        guild.updateCommands {
+            commands.forEach {
+                slash(it.name, it.description, it.slashCommandOptions) // Register the command for the guild
+            }
+        }.queue()
+
+        // Initialize the guild for music
+        logger.info("Initializing music for guild ${guild.name}...")
+        guildMusicManagers += guild.idLong to GuildMusicManager()
+
+    }
+
     logger.info("Registering command listeners")
     commands.forEach {
-        jda.onCommand(it.name, it.timeout, it.handler)
+        jda.onCommand(it.name, it.timeout) { event ->
+            logger.info("Received command ${it.name} from ${event.user.name}#${event.user.discriminator} in ${event.guild?.name ?: "DMs"}")
+            for (check in it.checks) {
+                if (!check.check(this, event)) {
+                    event.reply_(check.errorMessage).queue()
+                    logger.info("Command ${it.name} failed checks: ${check.errorMessage}")
+                    return@onCommand
+                }
+            }
+
+            // If it passed all the checks
+            logger.info("Command ${it.name} passed checks. Executing...")
+            it.commandHandler(this, event)
+        }
     }
     logger.info("Registered command listeners")
 
-    // More stuff from that other bot; I don't know what it's doing
+    manager.listener<ShutdownEvent> {
+        supervisor.cancel()
+    }
+
+    // https://github.com/MinnDevelopment/strumbot/blob/master/src/main/kotlin/strumbot/main.kt
     supervisor.invokeOnCompletion {
         if (it != null && it !is CancellationException) {
             logger.error("Supervisor failed with unexpected error", it)
@@ -113,25 +159,4 @@ fun main(args: Array<String>) {
         }
         jda.shutdown()
     }
-
-    System.gc() // I don't know why this is here, but it is funny and the other person did it, so I'm leaving it
-}
-
-private fun CoroutineEventManager.initCommands() = listener<GenericGuildEvent> { event ->
-    if (event !is GuildReadyEvent && event !is GuildJoinEvent) return@listener
-
-    val guild = event.guild
-    logger.info("Guild ready for startup: ${guild.name}. Checking to see if it is in the config...")
-
-    if (guild.idLong !in config.discord.guilds) {
-        logger.info("Guild ${guild.name} is not in the config. Skipping...")
-        return@listener
-    }
-    logger.info("Guild is in the config. Updating commands...")
-
-    guild.updateCommands {
-        commands.forEach {
-            slash(it.name, it.description, it.data) // Register the command for the guild
-        }
-    }.queue()
 }

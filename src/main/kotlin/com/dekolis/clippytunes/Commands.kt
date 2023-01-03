@@ -24,8 +24,17 @@ import net.dv8tion.jda.api.events.interaction.command.GenericCommandInteractionE
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData
 import kotlin.time.Duration
 
+typealias CommandContext = suspend CoroutineEventListener.(GenericCommandInteractionEvent) -> Unit
+typealias CommandCheckContext = suspend CoroutineEventListener.(GenericCommandInteractionEvent) -> Boolean
+
 val commands = listOf(
-    CTCommand("join", "Have the bot join the voice channel you are currently in") {
+    CTCommand(
+        name = "join",
+        description = "Have the bot join the voice channel you are currently in",
+        checks = listOf(
+            CTCommand.Check.inVoiceChannel,
+        ),
+    ) {
         it.reply_("asdf").queue()
     }
 )
@@ -34,6 +43,19 @@ class CTCommand(
     val name: String,
     val description: String,
     val timeout: Duration? = null,
-    val data: SlashCommandData.() -> Unit = {},
-    val handler: suspend CoroutineEventListener.(GenericCommandInteractionEvent) -> Unit
-)
+    val slashCommandOptions: SlashCommandData.() -> Unit = {},
+    val checks: List<Check> = emptyList(),
+    val commandHandler: CommandContext
+) {
+    class Check(val errorMessage: String, val check: CommandCheckContext) {
+        companion object {
+            val inVoiceChannel = Check("oopsie poopsie" /*TODO*/) { event: GenericCommandInteractionEvent ->
+                logger.debug(event.member.toString())
+                logger.debug(event.member!!.voiceState.toString())
+                logger.debug(event.member!!.voiceState!!.channel.toString())
+                // TODO: check always returns false, not sure why
+                event.member?.voiceState?.inAudioChannel() ?: false
+            }
+        }
+    }
+}

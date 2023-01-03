@@ -18,6 +18,45 @@
 
 package com.dekolis.clippytunes
 
-class TrackScheduler {
+import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
+import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
+import com.sedmelluq.discord.lavaplayer.player.event.AudioEvent
+import com.sedmelluq.discord.lavaplayer.player.event.AudioEventListener
+import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
+
+val guildMusicManagers = mutableMapOf<Long, GuildMusicManager>()
+
+class GuildMusicManager {
+    private val player = audioPlayerManager.createPlayer()
+    private var trackScheduler: TrackScheduler? = null
+
+    fun startup() {
+        trackScheduler = TrackScheduler(player)
+        player.addListener(trackScheduler)
+    }
+
+    fun destroy() {
+        trackScheduler?.destroy()
+        player.removeListener(trackScheduler)
+        trackScheduler = null
+    }
+
+    companion object {
+        private val audioPlayerManager = DefaultAudioPlayerManager()
+
+        init {
+            AudioSourceManagers.registerRemoteSources(audioPlayerManager)
+        }
+    }
+}
+
+class TrackScheduler(private val player: AudioPlayer) : AudioEventListener {
+    override fun onEvent(event: AudioEvent?) {
+        TODO("Not yet implemented")
+    }
+
+    fun destroy() {
+        TODO("I don't know if this will be needed")
+    }
 
 }
