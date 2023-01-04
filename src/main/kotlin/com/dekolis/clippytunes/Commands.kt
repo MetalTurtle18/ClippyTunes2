@@ -50,10 +50,6 @@ class CTCommand(
     class Check(val errorMessage: String, val check: CommandCheckContext) {
         companion object {
             val inVoiceChannel = Check("oopsie poopsie" /*TODO*/) { event: GenericCommandInteractionEvent ->
-                logger.debug(event.member.toString())
-                logger.debug(event.member!!.voiceState.toString())
-                logger.debug(event.member!!.voiceState!!.channel.toString())
-                // TODO: check always returns false, not sure why
                 event.member?.voiceState?.inAudioChannel() ?: false
             }
         }

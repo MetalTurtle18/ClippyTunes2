@@ -35,6 +35,7 @@ import net.dv8tion.jda.api.events.guild.GuildJoinEvent
 import net.dv8tion.jda.api.events.guild.GuildReadyEvent
 import net.dv8tion.jda.api.events.session.ShutdownEvent
 import net.dv8tion.jda.api.requests.GatewayIntent
+import net.dv8tion.jda.api.utils.MemberCachePolicy
 import net.dv8tion.jda.api.utils.cache.CacheFlag
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -81,7 +82,8 @@ fun main(args: Array<String>) {
         token = config.discord.botToken,
         enableCoroutines = false,
         intents = listOf(
-            GatewayIntent.GUILD_VOICE_STATES
+            GatewayIntent.GUILD_VOICE_STATES,
+            GatewayIntent.GUILD_MEMBERS
         )
     ) {
         setEventManager(manager)
@@ -94,6 +96,7 @@ fun main(args: Array<String>) {
                 config.discord.status.description
             )
         )
+        setMemberCachePolicy(MemberCachePolicy.VOICE)
         cache += CacheFlag.VOICE_STATE
     }
 
