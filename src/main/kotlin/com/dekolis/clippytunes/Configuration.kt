@@ -40,7 +40,11 @@ data class Discord(
     @SerialName("bot-token") val botToken: String,
     val status: Status,
     val guilds: List<Long>
-)
+) {
+    init {
+        require(guilds.isNotEmpty())
+    }
+}
 
 @Serializable
 data class Status(

@@ -2,7 +2,7 @@
   "discord": {
     "bot-token": "<TOKEN>",
     "status": {
-      "activity": "listening",
+      "activity": "LISTENING",
       "description": "to music"
     },
     "guilds": []

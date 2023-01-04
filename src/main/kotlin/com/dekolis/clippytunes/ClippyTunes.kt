@@ -77,6 +77,32 @@ fun main(args: Array<String>) {
     // Create a coroutine manager with this scope and a default event timeout of 1 minute
     val manager = CoroutineEventManager(scope, 1.minutes)
 
+    // Listener for when the bot joins a guild or when guilds are initialized on startup
+    manager.listener<GenericGuildEvent> { event ->
+        if (event !is GuildReadyEvent && event !is GuildJoinEvent) return@listener
+
+        val guild = event.guild
+        logger.info("Guild ready for startup: ${guild.name}. Checking to see if it is in the config...")
+
+        if (guild.idLong !in config.discord.guilds) {
+            logger.info("Guild ${guild.name} is not in the config. Skipping...")
+            return@listener
+        }
+        logger.info("Guild is in the config. Updating commands...")
+
+        // Update commands for this guild
+        guild.updateCommands {
+            commands.forEach {
+                slash(it.name, it.description, it.slashCommandOptions) // Register the command for the guild
+            }
+        }.queue()
+
+        // Initialize the guild for music
+        logger.info("Initializing music for guild ${guild.name}...")
+        guildMusicManagers += guild.idLong to GuildMusicManager(guild)
+
+    }
+
     logger.info("Initializing JDA")
     val jda = light(
         token = config.discord.botToken,
@@ -102,33 +128,6 @@ fun main(args: Array<String>) {
 
     jda.awaitReady()
     logger.info("Initialized JDA")
-
-    // https://github.com/MinnDevelopment/strumbot/blob/master/src/main/kotlin/strumbot/main.kt
-    // Listener for when the bot joins a guild or when guilds are initialized on startup
-    manager.listener<GenericGuildEvent> { event ->
-        if (event !is GuildReadyEvent && event !is GuildJoinEvent) return@listener
-
-        val guild = event.guild
-        logger.info("Guild ready for startup: ${guild.name}. Checking to see if it is in the config...")
-
-        if (guild.idLong !in config.discord.guilds) {
-            logger.info("Guild ${guild.name} is not in the config. Skipping...")
-            return@listener
-        }
-        logger.info("Guild is in the config. Updating commands...")
-
-        // Update commands for this guild
-        guild.updateCommands {
-            commands.forEach {
-                slash(it.name, it.description, it.slashCommandOptions) // Register the command for the guild
-            }
-        }.queue()
-
-        // Initialize the guild for music
-        logger.info("Initializing music for guild ${guild.name}...")
-        guildMusicManagers += guild.idLong to GuildMusicManager()
-
-    }
 
     logger.info("Registering command listeners")
     commands.forEach {

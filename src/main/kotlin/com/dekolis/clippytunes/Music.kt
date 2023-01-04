@@ -23,12 +23,16 @@ import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEvent
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventListener
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel
 
 val guildMusicManagers = mutableMapOf<Long, GuildMusicManager>()
 
-class GuildMusicManager {
+class GuildMusicManager(guild: Guild) {
     private val player = audioPlayerManager.createPlayer()
+    private val audioManager = guild.audioManager
     private var trackScheduler: TrackScheduler? = null
+    private var voiceChannel: VoiceChannel? = null
 
     fun startup() {
         trackScheduler = TrackScheduler(player)
@@ -39,6 +43,11 @@ class GuildMusicManager {
         trackScheduler?.destroy()
         player.removeListener(trackScheduler)
         trackScheduler = null
+    }
+
+    fun joinVoiceChannel(channel: VoiceChannel) {
+        voiceChannel = channel
+        audioManager.openAudioConnection(voiceChannel)
     }
 
     companion object {

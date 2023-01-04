@@ -20,6 +20,7 @@ package com.dekolis.clippytunes
 
 import dev.minn.jda.ktx.events.CoroutineEventListener
 import dev.minn.jda.ktx.messages.reply_
+import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel
 import net.dv8tion.jda.api.events.interaction.command.GenericCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData
 import kotlin.time.Duration
@@ -32,10 +33,14 @@ val commands = listOf(
         name = "join",
         description = "Have the bot join the voice channel you are currently in",
         checks = listOf(
-            CTCommand.Check.inVoiceChannel,
+            CTCommand.Check.memberInVoiceChannel,
         ),
     ) {
-        it.reply_("asdf").queue()
+        val guild = it.guild
+        val channel = it.member!!.voiceState!!.channel!! as VoiceChannel
+        val musicManager = guildMusicManagers[guild!!.idLong]!!
+        musicManager.joinVoiceChannel(channel)
+        it.reply_("Joined ${channel.asMention}").queue()
     }
 )
 
@@ -49,7 +54,7 @@ class CTCommand(
 ) {
     class Check(val errorMessage: String, val check: CommandCheckContext) {
         companion object {
-            val inVoiceChannel = Check("oopsie poopsie" /*TODO*/) { event: GenericCommandInteractionEvent ->
+            val memberInVoiceChannel = Check("oopsie poopsie" /*TODO*/) { event: GenericCommandInteractionEvent ->
                 event.member?.voiceState?.inAudioChannel() ?: false
             }
         }
