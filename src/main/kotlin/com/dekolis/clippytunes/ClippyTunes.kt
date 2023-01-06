@@ -20,6 +20,7 @@ package com.dekolis.clippytunes
 
 import dev.minn.jda.ktx.events.CoroutineEventManager
 import dev.minn.jda.ktx.events.onCommand
+import dev.minn.jda.ktx.events.onCommandAutocomplete
 import dev.minn.jda.ktx.interactions.commands.slash
 import dev.minn.jda.ktx.interactions.commands.updateCommands
 import dev.minn.jda.ktx.jdabuilder.cache
@@ -88,14 +89,21 @@ fun main(args: Array<String>) {
             logger.info("Guild ${guild.name} is not in the config. Skipping...")
             return@listener
         }
-        logger.info("Guild is in the config. Updating commands...")
+        logger.info("Guild ${guild.name} is in the config. Updating commands...")
 
         // Update commands for this guild
         guild.updateCommands {
             commands.forEach {
-                slash(it.name, it.description, it.slashCommandOptions) // Register the command for the guild
+                slash(it.name, it.description) {
+                    it.options.forEach { option ->
+                        addOption(option.type, option.name, option.description, option.required, option.doAutoComplete)
+                    }
+                    it.slashCommandData(this)
+                }
+                logger.info("Registered command ${it.name} to guild ${guild.name}")
             }
         }.queue()
+        logger.info("Commands updated for guild ${guild.name}")
 
         // Initialize the guild for music
         logger.info("Initializing music for guild ${guild.name}...")
@@ -131,6 +139,14 @@ fun main(args: Array<String>) {
 
     logger.info("Registering command listeners")
     commands.forEach {
+        it.options.forEach { option ->
+            jda.onCommandAutocomplete(
+                name = it.name,
+                option = option.name,
+                consumer = option.autocomplete
+            )
+        }
+
         jda.onCommand(it.name, it.timeout) { event ->
             logger.info("Received command ${it.name} from ${event.user.name}#${event.user.discriminator} in ${event.guild?.name ?: "DMs"}")
             for (check in it.checks) {

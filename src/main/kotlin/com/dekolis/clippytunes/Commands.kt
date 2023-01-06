@@ -21,7 +21,9 @@ package com.dekolis.clippytunes
 import dev.minn.jda.ktx.events.CoroutineEventListener
 import dev.minn.jda.ktx.messages.reply_
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel
+import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
 import net.dv8tion.jda.api.events.interaction.command.GenericCommandInteractionEvent
+import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData
 import kotlin.time.Duration
 
@@ -41,6 +43,25 @@ val commands = listOf(
         val musicManager = guildMusicManagers[guild!!.idLong]!!
         musicManager.joinVoiceChannel(channel)
         it.reply_("Joined ${channel.asMention}").queue()
+    },
+    CTCommand(
+        name = "queue",
+        description = "Add a song to the queue",
+        checks = listOf(
+            CTCommand.Check.memberInVoiceChannel,
+        ),
+        options = listOf(
+            CTCommand.Option(
+                name = "song",
+                description = "The song to add to the queue",
+                type = OptionType.STRING,
+                required = true,
+                simpleAutocomplete = listOf("option1", "option2"),
+            )
+        )
+    ) {
+
+        it.reply_(it.getOption("song")!!.asString).queue()
     }
 )
 
@@ -48,8 +69,9 @@ class CTCommand(
     val name: String,
     val description: String,
     val timeout: Duration? = null,
-    val slashCommandOptions: SlashCommandData.() -> Unit = {},
     val checks: List<Check> = emptyList(),
+    val options: List<Option> = emptyList(),
+    val slashCommandData: SlashCommandData.() -> Unit = {},
     val commandHandler: CommandContext
 ) {
     class Check(val errorMessage: String, val check: CommandCheckContext) {
@@ -58,5 +80,27 @@ class CTCommand(
                 event.member?.voiceState?.inAudioChannel() ?: false
             }
         }
+    }
+
+    class Option(
+        val name: String,
+        val description: String,
+        val type: OptionType = OptionType.STRING,
+        val required: Boolean = false,
+        private val simpleAutocomplete: List<String> = emptyList(),
+        private val customAutocomplete: suspend CoroutineEventListener.(CommandAutoCompleteInteractionEvent) -> Unit = {}
+    ) {
+        val autocomplete: suspend CoroutineEventListener.(CommandAutoCompleteInteractionEvent) -> Unit
+            get() =
+                if (simpleAutocomplete.isEmpty()) {
+                    customAutocomplete
+                } else {
+                    { event ->
+                        event.replyChoiceStrings(simpleAutocomplete).queue()
+                    }
+                }
+
+        val doAutoComplete: Boolean
+            get() = simpleAutocomplete.isNotEmpty() || customAutocomplete != {}
     }
 }
