@@ -16,16 +16,16 @@ repositories {
 }
 
 dependencies {
-    testImplementation(kotlin("test"))
+    testImplementation("org.jetbrains.kotlin:kotlin-test:1.8.20-RC")
 
     implementation("org.slf4j:slf4j-api:2.0.6")
-    implementation("ch.qos.logback:logback-core:1.4.5")
-    implementation("ch.qos.logback:logback-classic:1.4.5")
+    implementation("ch.qos.logback:logback-core:1.4.6")
+    implementation("ch.qos.logback:logback-classic:1.4.6")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0-Beta")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
 
-    implementation("net.dv8tion:JDA:5.0.0-beta.1")
+    implementation("net.dv8tion:JDA:5.0.0-beta.5")
     implementation("com.github.minndevelopment:jda-ktx:0.10.0-beta.1")
     implementation("com.sedmelluq:lavaplayer:1.3.77")
 }
