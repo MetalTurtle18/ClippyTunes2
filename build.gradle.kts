@@ -22,10 +22,10 @@ dependencies {
     implementation("ch.qos.logback:logback-core:1.4.6")
     implementation("ch.qos.logback:logback-classic:1.4.6")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0-Beta")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
 
-    implementation("net.dv8tion:JDA:5.0.0-beta.5")
+    implementation("net.dv8tion:JDA:5.0.0-beta.9")
     implementation("com.github.minndevelopment:jda-ktx:0.10.0-beta.1")
     implementation("com.sedmelluq:lavaplayer:1.3.77")
 }
