@@ -38,10 +38,9 @@ val commands = listOf(
             CTCommand.Check.memberInVoiceChannel,
         ),
     ) {
-        val guild = it.guild
         val channel = it.member!!.voiceState!!.channel!! as VoiceChannel
-        val musicManager = guildMusicManagers[guild!!.idLong]!!
-        musicManager.joinVoiceChannel(channel)
+
+        guildMusicManagers[it.guild!!.idLong]!!.joinVoiceChannel(channel)
         it.reply_("Joined ${channel.asMention}").queue()
     },
     CTCommand(
@@ -55,13 +54,15 @@ val commands = listOf(
                 name = "song",
                 description = "The song to add to the queue",
                 type = OptionType.STRING,
-                required = true,
-                simpleAutocomplete = listOf("option1", "option2"),
+                required = true
             )
         )
     ) {
+        val musicManager = guildMusicManagers[it.guild!!.idLong]!!
+        val song = it.getOption("song")!!.asString
 
-        it.reply_(it.getOption("song")!!.asString).queue()
+        musicManager.loadItem(song)
+        it.reply_(musicManager.queue.toString()).queue()
     }
 )
 
