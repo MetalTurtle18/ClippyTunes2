@@ -86,7 +86,7 @@ fun main(args: Array<String>) {
         logger.info("Guild ready for startup: ${guild.name}. Checking to see if it is in the config...")
 
         if (guild.idLong !in config.discord.guilds) {
-            logger.info("Guild ${guild.name} is not in the config. Skipping...")
+            logger.info("Guild ${guild.name} is not in the config. Skipping.")
             return@listener
         }
         logger.info("Guild ${guild.name} is in the config. Updating commands...")
@@ -108,7 +108,7 @@ fun main(args: Array<String>) {
         // Initialize the guild for music
         logger.info("Initializing music for guild ${guild.name}...")
         guildMusicManagers += guild.idLong to GuildMusicManager(guild)
-
+        logger.info("Initialized music for guild ${guild.name}")
     }
 
     logger.info("Initializing JDA")
